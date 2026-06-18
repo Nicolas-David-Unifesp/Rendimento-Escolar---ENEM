@@ -1,6 +1,6 @@
 # Previsão de Rendimento Escolar com Regressão
 ## Projeto Final — Curso de Inteligência Artificial
-**ODS 4 — Educação de Qualidade
+ODS 4 — Educação de Qualidade
  
 ---
  

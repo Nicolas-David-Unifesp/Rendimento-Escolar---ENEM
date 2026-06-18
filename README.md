@@ -7,7 +7,7 @@ ODS 4 — Educação de Qualidade
 ## Descrição do Projeto
 Este projeto deseja entender **quais fatores socioeconômicos mais influenciam o rendimento
 escolar dos municípios brasileiros**, medido pela nota média do ENEM, utilizando
-técnicas de **regressão linear**, **Regressão linear múltipla** e **Regressão polinomial**  como ferramentas essenciais para este tipo de análise.
+técnicas de **Regressão linear**, **Regressão linear múltipla** e **Regressão polinomial**  como ferramentas essenciais para este tipo de análise.
  
 Então, é possível fazer uma pergunta central, que está logo abaixo:
 > *É possível prever o desempenho médio de estudantes de um município com base em

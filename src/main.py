@@ -22,16 +22,16 @@ from sklearn.model_selection import train_test_split, cross_val_score
 from sklearn.metrics import mean_squared_error, r2_score, mean_absolute_error
 from sklearn.pipeline import Pipeline
 
-#----
-# 1. CARREGAMENTO E DESCRIÇÃO DOS DADOS
-#----
+
+#Carregando e fazendo a análise exploratória dos dados
+
 
 def carregar_dados(caminho_csv: str) -> pd.DataFrame:
     """
     Carrega o dataset do ENEM/IDEB.
     Esperado: colunas com indicadores socioeconômicos por município.
 
-    Colunas esperadas (exemplo):
+    Colunas que deviam estar presentes:
         - municipio, uf, idh, renda_per_capita, acesso_internet_pct,
           professores_por_aluno, infraestrutura_idx, nota_media_enem
     """
@@ -65,7 +65,7 @@ def descrever_dados(df: pd.DataFrame):
     plt.savefig("graficos/01_distribuicoes.png", dpi=150, bbox_inches="tight")
     plt.show()
 
-    # Mapa de correlação
+    # Mapa de correlação, isto é, como as variáveis se relacionam entre si
     plt.figure(figsize=(9, 7))
     sns.heatmap(
         df[cols_plot].corr().round(2),
@@ -78,13 +78,11 @@ def descrever_dados(df: pd.DataFrame):
     plt.show()
 
 
-# =============================================================================
-# 2. PRÉ-PROCESSAMENTO
-# =============================================================================
+#Pré-processamento: limpeza, normalização e divisão treino/teste
 
 def preprocessar(df: pd.DataFrame):
     """
-    Remove nulos, separa features e target,
+    Limpa dados faltantes,
     aplica normalização e divide em treino/teste.
     """
     df = df.dropna()
@@ -110,10 +108,10 @@ def preprocessar(df: pd.DataFrame):
     return X_train_sc, X_test_sc, y_train, y_test, scaler, FEATURES
 
 
-# =============================================================================
-# 3. ALGORITMOS
-# =============================================================================
 
+# Parte dealgoritmos essenciais 
+
+#Faz a avaliação de um modelo, imprimindo métricas e retornando um dicionário com os resultados
 def avaliar_modelo(nome, modelo, X_test, y_test, y_pred, tempo):
     """Imprime métricas de avaliação de um modelo."""
     mse  = mean_squared_error(y_test, y_pred)
@@ -124,24 +122,24 @@ def avaliar_modelo(nome, modelo, X_test, y_test, y_pred, tempo):
     print(f"\n{'─'*50}")
     print(f"  {nome}")
     print(f"{'─'*50}")
-    print(f"  R²    : {r2:.4f}")
+    print(f"  R²    : {r2:.4f}") # Aqui é o coeficiente de determinação, que indica a proporção da variância explicada pelo modelo.
     print(f"  RMSE  : {rmse:.4f}")
     print(f"  MAE   : {mae:.4f}")
     print(f"  Tempo : {tempo*1000:.2f} ms")
     return {"modelo": nome, "R2": r2, "RMSE": rmse, "MAE": mae, "tempo_ms": tempo*1000}
 
 
-# ── Algoritmo 1: Regressão Linear Simples ────────────────────────────────────
+# Regressão Linear Simples
 
 def regressao_linear_simples(X_train, X_test, y_train, y_test):
     """
-    Regressão linear usando apenas o IDH (1ª feature).
-    Serve como baseline e ilustra o caso univariado.
+    Regressão linear usando apenas o IDH.
+    Serve basicamente como um baseline e ilustrando o caso com uma única feature.
     """
     print("\n[ALG 1] Regressão Linear Simples (baseline — IDH)")
 
     X_tr_1d = X_train[:, [0]]
-    X_te_1d = X_test[:, [0]]
+    X_te_1d = X_test[:, [0]] # Treino e teste com apenas a primeira coluna (IDH)
 
     t0 = time.time()
     modelo = LinearRegression()
@@ -153,17 +151,17 @@ def regressao_linear_simples(X_train, X_test, y_train, y_test):
                           X_te_1d, y_test, y_pred, tempo), modelo, y_pred
 
 
-# ── Algoritmo 2: Regressão Linear Múltipla ───────────────────────────────────
+# Regressão Linear Múltipla
 
 def regressao_linear_multipla(X_train, X_test, y_train, y_test):
     """
     Regressão linear com todas as features socioeconômicas.
     """
-    print("\n[ALG 2] Regressão Linear Múltipla (todas as features)")
+    print("\n[ALG 2] Regressão Linear Múltipla")
 
     t0 = time.time()
     modelo = LinearRegression()
-    modelo.fit(X_train, y_train)
+    modelo.fit(X_train, y_train) # Faz o treinamento do modelo com todas as features
     y_pred = modelo.predict(X_test)
     tempo  = time.time() - t0
 
@@ -171,12 +169,22 @@ def regressao_linear_multipla(X_train, X_test, y_train, y_test):
                           X_test, y_test, y_pred, tempo), modelo, y_pred
 
 
-# ── Algoritmo 3 (bônus): Ridge e Lasso com variação de alpha ─────────────────
+# Ridge e Lasso com variação de alpha
+
+#Tentando explicar: Pelo que vi basicamente o Ridge e o Lasso são técnicas de regularização 
+# que ajudam a prevenir o overfitting em modelos de regressão linear. 
+# Dessa forma, uma penalidade é adcionada à função de custo do modelo, 
+# o que incentiva a manter os coeficientes dos parâmetros pequenos.
+
+#Por que coeficientes pequenos? Porque isso ajuda a reduzir a complexidade do modelo,
+# tornando-o mais simples e menos propenso a se ajustar demais aos dados de treinamento, ou seja,
+#pelo que vi, o Ridge tende a encolher os coeficientes de forma contínua (L2), 
+# enquanto o Lasso pode zerar alguns coeficientes (L1), efetivamente selecionando variáveis.
 
 def regressao_regularizada(X_train, X_test, y_train, y_test):
     """
-    Compara Ridge (L2) e Lasso (L1) com diferentes valores de alpha.
-    Mostra influência do hiperparâmetro de regularização.
+    Compara Ridge (L2) e Lasso (L1) com diferentes valores de alpha (parâmetro de regularização).
+    Mostra influência disso no desempenho do modelo medido por R² e RMSE.
     """
     print("\n[ALG 3] Ridge e Lasso — variação de alpha")
 
@@ -185,7 +193,8 @@ def regressao_regularizada(X_train, X_test, y_train, y_test):
     resultados_lasso = []
 
     for alpha in alphas:
-        # Ridge
+        # Ridge - Ridge é mais robusto a valores extremos e tende a manter todos os coeficientes,
+        # então acho que vale a pena ver como ele se comporta com diferentes alphas.
         t0 = time.time()
         r = Ridge(alpha=alpha)
         r.fit(X_train, y_train)
@@ -198,7 +207,9 @@ def regressao_regularizada(X_train, X_test, y_train, y_test):
             "tempo_ms": (t)*1000
         })
 
-        # Lasso
+        # Lasso - Lasso é mais sensível a valores extremos e pode zerar coeficientes, 
+        # então é interessante ver como ele se comporta com diferentes alphas.
+
         t0 = time.time()
         l = Lasso(alpha=alpha, max_iter=5000)
         l.fit(X_train, y_train)
@@ -222,14 +233,14 @@ def regressao_regularizada(X_train, X_test, y_train, y_test):
     return df_ridge, df_lasso
 
 
-# ── Algoritmo 4 (bônus): Regressão Polinomial ────────────────────────────────
+# Regressão Polinomial
 
 def regressao_polinomial(X_train, X_test, y_train, y_test):
     """
     Regressão polinomial variando o grau (1 a 4).
-    Usa apenas o IDH para facilitar a visualização.
+    Usa apenas o IDH para facilitar a visualização e é claro o código.
     """
-    print("\n[ALG 4] Regressão Polinomial — variação de grau (IDH)")
+    print("\n[ALG 4] Regressão Polinomial")
 
     X_tr_1d = X_train[:, [0]]
     X_te_1d = X_test[:, [0]]
@@ -257,9 +268,7 @@ def regressao_polinomial(X_train, X_test, y_train, y_test):
     return pd.DataFrame(resultados)
 
 
-# =============================================================================
-# 4. VISUALIZAÇÕES DE RESULTADOS
-# =============================================================================
+# Vamo ver os resultados, brother
 
 def plot_comparacao_modelos(resultados: list):
     """Gráfico comparativo de R² e RMSE entre os modelos principais."""
@@ -287,9 +296,9 @@ def plot_comparacao_modelos(resultados: list):
 
 
 def plot_alpha_regularizacao(df_ridge, df_lasso):
-    """Mostra influência do alpha de regularização em Ridge e Lasso."""
+    """Pra ver a influencia do alpha em Ridge e Lasso."""
     fig, axes = plt.subplots(1, 2, figsize=(13, 5))
-    fig.suptitle("Influência do Hiperparâmetro Alpha na Regularização", fontsize=14)
+    fig.suptitle("Influência do Alpha na Regularização", fontsize=14)
 
     for ax, df, nome, cor in zip(
         axes,
@@ -334,7 +343,7 @@ def plot_grau_polinomial(df_poly):
 
 
 def plot_real_vs_predito(y_test, y_pred_simples, y_pred_multipla):
-    """Scatter: valores reais vs. preditos para ambos os modelos."""
+    """Valores reais vs. preditos para ambos os modelos - o var de futebol"""
     fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 5))
     fig.suptitle("Valores Reais vs. Preditos", fontsize=14)
 
@@ -371,32 +380,29 @@ def plot_tempo_execucao(resultados: list):
     plt.show()
 
 
-# =============================================================================
-# 5. PIPELINE PRINCIPAL
-# =============================================================================
+# Pipeline principal de execução do script ou a main
 
 if __name__ == "__main__":
     import os
     os.makedirs("graficos", exist_ok=True)
 
-    # ── Carregamento ──────────────────────────────────────────────────────────
-    # Substitua pelo caminho real do arquivo CSV baixado do INEP/IBGE.
-    # Exemplo: df = carregar_dados("dados/enem_municipios_2022.csv")
+    
+    # Aqui seria para substituir pelo caminho real do arquivo baixado no inep
     df = carregar_dados("dados/enem_municipios.csv")
 
-    # ── Análise exploratória ──────────────────────────────────────────────────
+    # Análise exploratória 
     descrever_dados(df)
 
-    # ── Pré-processamento ─────────────────────────────────────────────────────
+    # Pré-processamento 
     X_train, X_test, y_train, y_test, scaler, features = preprocessar(df)
 
-    # ── Algoritmos ───────────────────────────────────────────────────────────
+    #  Os algoritmos 
     res_simples,  mod_simples,  yp_simples  = regressao_linear_simples(X_train, X_test, y_train, y_test)
     res_multipla, mod_multipla, yp_multipla = regressao_linear_multipla(X_train, X_test, y_train, y_test)
     df_ridge, df_lasso = regressao_regularizada(X_train, X_test, y_train, y_test)
     df_poly            = regressao_polinomial(X_train, X_test, y_train, y_test)
 
-    # ── Comparação e visualizações ────────────────────────────────────────────
+    # Aqui seria só para visualizar os dados
     resultados_principais = [res_simples, res_multipla]
     plot_comparacao_modelos(resultados_principais)
     plot_alpha_regularizacao(df_ridge, df_lasso)
